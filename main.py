@@ -18,6 +18,11 @@ intents.members = True
 bot = commands.Bot(command_prefix=PREFIX, intents=intents)
 
 
+@bot.command(name='channel_id')
+async def get_channel_id(ctx, channel):
+    await ctx.send(channel[2:-1])
+
+
 @bot.command(name='answer')
 @commands.is_owner()
 async def answers_on(ctx, status):
@@ -37,20 +42,24 @@ async def number_of_words(ctx):
 
 
 @bot.command(name='channel')
-async def channels_action(ctx, action, id):
+async def channels_action(ctx, action, id=123):
     if action == 'add':
         AVAIABLE_CHANNELS.append(id)
-        await ctx.send(f'Теперь бот будет говорить в канале с ID {id}')
+        await ctx.send(f'Теперь бот будет говорить в канале {"<#" + str(id) + ">"}')
     elif action == 'remove':
         try:
             AVAIABLE_CHANNELS.remove(id)
-            await ctx.send(f'Бот не будет говорить в канале с ID {id}')
+            await ctx.send(f'Бот не будет говорить в канале {"<#" + str(id) + ">"}')
         except Exception:
             pass
     elif action == 'show':
         if not AVAIABLE_CHANNELS:
             await ctx.send('Все каналы доступны')
-        await ctx.send(AVAIABLE_CHANNELS)
+        else:
+            await ctx.send(', '. join(list(map(lambda x: '<#' + x + '>' + AVAIABLE_CHANNELS))))
+    elif action == 'clear':
+        AVAIABLE_CHANNELS.clear()
+        await ctx.send('Бот будет говорить во всех каналах')
 
 
 
@@ -59,7 +68,7 @@ async def on_message(message):
     if message.author == bot.user:
         return
     if MESSAGE_ANSWER and (message.content[0:len(PREFIX)] != PREFIX):
-        if str(message.channel.id) in AVAIABLE_CHANNELS or not AVAIABLE_CHANNELS:
+        if message.channel.id in AVAIABLE_CHANNELS or not AVAIABLE_CHANNELS:
             msg = ''
             for _ in range(3):
                 with open("words.json", "r", encoding='utf-8') as f:
@@ -72,7 +81,7 @@ async def on_message(message):
                 words = data["words"]
 
             for word in message.content.split():
-                if word != '"' and (word not in words):
+                if word != '"' and word[0:2] != '<@' and (word not in words):
                     words.append(word)
 
             with open("words.json", "w", encoding='utf-8') as f:
