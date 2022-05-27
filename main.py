@@ -3,7 +3,7 @@ import logging
 import random
 import json
 from discord.ext import commands
-from constants import TOKEN, PREFIX, MESSAGE_ANSWER
+from constants import TOKEN, PREFIX, MESSAGE_ANSWER, AVAIABLE_CHANNELS
 
 logger = logging.getLogger('discord')
 logger.setLevel(logging.WARNING)
@@ -18,20 +18,15 @@ intents.members = True
 bot = commands.Bot(command_prefix=PREFIX, intents=intents)
 
 
-@bot.command(name='answer_off')
+@bot.command(name='answer')
 @commands.is_owner()
-async def answers_off(ctx):
-    global MESSAGE_ANSWER
-    MESSAGE_ANSWER = False
-    await ctx.send('Ответы на сообщения отключены.')
-
-
-@bot.command(name='answer_on')
-@commands.is_owner()
-async def answers_on(ctx):
-    global MESSAGE_ANSWER
-    MESSAGE_ANSWER = True
-    await ctx.send('Ответы на сообщения включены.')
+async def answers_on(ctx, status):
+    if status == 'on':
+        MESSAGE_ANSWER = True
+        await ctx.send('Ответы на сообщения включены.')
+    elif status == 'off':
+        MESSAGE_ANSWER = False
+        await ctx.send('Ответы на сообщения выключены.')
 
 
 @bot.command(name='length')
@@ -41,30 +36,49 @@ async def number_of_words(ctx):
     await ctx.send(len(data["words"]))
 
 
+@bot.command(name='channel')
+async def channels_action(ctx, action, id):
+    if action == 'add':
+        AVAIABLE_CHANNELS.append(id)
+        await ctx.send(f'Теперь бот будет говорить в канале с ID {id}')
+    elif action == 'remove':
+        try:
+            AVAIABLE_CHANNELS.remove(id)
+            await ctx.send(f'Бот не будет говорить в канале с ID {id}')
+        except Exception:
+            pass
+    elif action == 'show':
+        if not AVAIABLE_CHANNELS:
+            await ctx.send('Все каналы доступны')
+        await ctx.send(AVAIABLE_CHANNELS)
+
+
+
 @bot.event
 async def on_message(message):
     if message.author == bot.user:
         return
     if MESSAGE_ANSWER and (message.content[0:len(PREFIX)] != PREFIX):
-        msg = ''
-        for _ in range(3):
+        if str(message.channel.id) in AVAIABLE_CHANNELS or not AVAIABLE_CHANNELS:
+            msg = ''
+            for _ in range(3):
+                with open("words.json", "r", encoding='utf-8') as f:
+                    data = json.load(f)
+                    words = data["words"]
+                    msg += random.choice(words) + ' '
+
             with open("words.json", "r", encoding='utf-8') as f:
                 data = json.load(f)
                 words = data["words"]
-                msg += random.choice(words) + ' '
 
-        with open("words.json", "r", encoding='utf-8') as f:
-            data = json.load(f)
-            words = data["words"]
+            for word in message.content.split():
+                if word != '"' and (word not in words):
+                    words.append(word)
 
-        for word in message.content.split():
-            if word != '"' and (word not in words):
-                words.append(word)
+            with open("words.json", "w", encoding='utf-8') as f:
+                json.dump({"words": words}, f, ensure_ascii=False)
 
-        with open("words.json", "w", encoding='utf-8') as f:
-            json.dump({"words": words}, f, ensure_ascii=False)
-
-        await message.channel.send(msg[0:-1])
+            await message.channel.send(msg[0:-1])
     await bot.process_commands(message)
 
 

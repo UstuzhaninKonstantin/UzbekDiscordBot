@@ -1,3 +1,4 @@
 TOKEN = "-"
 PREFIX = 'u!'
 MESSAGE_ANSWER = True
+AVAIABLE_CHANNELS = []
