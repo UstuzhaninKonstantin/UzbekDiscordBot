@@ -1,1 +1,1 @@
-TOKEN = 'you dont have to know it :)'
+TOKEN = "OTYwMTQ1NzQ5NjI5MzYyMTk2.GJQNR0.NRGraS_28QckYyQy0jzOMuVCCwExMsCwegzPVA"
