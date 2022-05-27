@@ -3,7 +3,7 @@ import logging
 import random
 import json
 from discord.ext import commands
-from constants import TOKEN
+from constants import TOKEN, PREFIX
 
 logger = logging.getLogger('discord')
 logger.setLevel(logging.WARNING)
@@ -14,9 +14,8 @@ logger.addHandler(handler)
 intents = discord.Intents.default()
 intents.members = True
 
-prefix = 'u!'
 
-bot = commands.Bot(command_prefix=prefix, intents=intents)
+bot = commands.Bot(command_PREFIX=PREFIX, intents=intents)
 
 
 @bot.command(name='length')
@@ -42,7 +41,7 @@ async def on_message(message):
         words = data["words"]
 
     for word in message.content.split():
-        if word != '"' and word[0:len(prefix)] != prefix and (word not in words):
+        if word != '"' and word[0:len(PREFIX)] != PREFIX and (word not in words):
             words.append(word)
 
     with open("words.json", "w", encoding='utf-8') as f:
